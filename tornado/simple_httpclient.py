@@ -209,7 +209,10 @@ class _HTTPConnection(object):
             self._timeout = self.io_loop.add_timeout(
                 self.start_time + timeout,
                 stack_context.wrap(self._on_timeout))
-        self.stream.set_close_callback(self._on_close)
+        # ivan: commenting out close_callback as we close the steam from close,
+        # and we don't want get exception 599 in this case
+        # self.stream.set_close_callback(self._on_close)
+
         # ipv6 addresses are broken (in self.parsed.hostname) until
         # 2.7, here is correctly parsed value calculated in __init__
         self.stream.connect(sockaddr, self._on_connect,
