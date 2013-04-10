@@ -78,6 +78,8 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
             self.resolver = OverrideResolver(resolver=self.resolver,
                                              mapping=hostname_mapping)
 
+        self.connections = {}
+
     def fetch_impl(self, request, callback):
         self.queue.append((request, callback))
         self._process_queue()
@@ -92,7 +94,7 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
                 request, callback = self.queue.popleft()
                 key = object()
                 self.active[key] = (request, callback)
-                _HTTPConnection(self.io_loop, self, request,
+                self.connections[request] = _HTTPConnection(self.io_loop, self, request,
                                 functools.partial(self._release_fetch, key),
                                 callback,
                                 self.max_buffer_size, self.resolver)
@@ -100,6 +102,13 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
     def _release_fetch(self, key):
         del self.active[key]
         self._process_queue()
+
+    def close(self, request):
+        if request in self.connections:
+            self.connections[request].stream.close()
+            del self.connections[request]
+
+        super(SimpleAsyncHTTPClient, self).close()
 
 
 class _HTTPConnection(object):
