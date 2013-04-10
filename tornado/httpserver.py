@@ -214,7 +214,8 @@ class HTTPConnection(object):
     def _on_connection_close(self):
         callback = self._close_callback
         self._close_callback = None
-        callback()
+        if callback:
+            callback()
         # Delete any unfinished callbacks to break up reference cycles.
         self._header_callback = None
         self._clear_callbacks()
