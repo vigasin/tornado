@@ -94,7 +94,7 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
                 request, callback = self.queue.popleft()
                 key = object()
                 self.active[key] = (request, callback)
-                self.connections[request] = _HTTPConnection(self.io_loop, self, request,
+                self.connections[request.request] = _HTTPConnection(self.io_loop, self, request,
                                 functools.partial(self._release_fetch, key),
                                 callback,
                                 self.max_buffer_size, self.resolver)
