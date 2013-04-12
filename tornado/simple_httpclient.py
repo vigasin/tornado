@@ -88,6 +88,8 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
         self.hostname_mapping = hostname_mapping
         self.max_buffer_size = max_buffer_size
 
+        self.connections = {}
+
     def fetch(self, request, callback, **kwargs):
         if not isinstance(request, HTTPRequest):
             request = HTTPRequest(url=request, **kwargs)
@@ -109,14 +111,23 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
                 request, callback = self.queue.popleft()
                 key = object()
                 self.active[key] = (request, callback)
-                _HTTPConnection(self.io_loop, self, request,
+                self.connections[request.request] = (key, _HTTPConnection(self.io_loop, self, request,
                                 functools.partial(self._release_fetch, key),
                                 callback,
-                                self.max_buffer_size)
+                                self.max_buffer_size))
 
     def _release_fetch(self, key):
         del self.active[key]
         self._process_queue()
+
+    def close(self, request):
+        if request in self.connections:
+            key, connection = self.connections[request]
+            connection.stream.close()
+            self._release_fetch(key)
+            del self.connections[request]
+
+        super(SimpleAsyncHTTPClient, self).close()
 
 
 class _HTTPConnection(object):
