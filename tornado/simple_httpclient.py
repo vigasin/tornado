@@ -117,8 +117,9 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
                                 self.max_buffer_size))
 
     def _release_fetch(self, key):
-        del self.active[key]
-        self._process_queue()
+        if key in self.active:
+            del self.active[key]
+            self._process_queue()
 
     def close(self, request):
         if request in self.connections:
