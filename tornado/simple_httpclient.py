@@ -231,7 +231,9 @@ class _HTTPConnection(object):
                 self._timeout = self.io_loop.add_timeout(
                     self.start_time + timeout,
                     stack_context.wrap(self._on_timeout))
-            self.stream.set_close_callback(self._on_close)
+            # ivan: commenting out close_callback as we close the steam from close,
+            # and we don't want get exception 599 in this case
+            #self.stream.set_close_callback(self._on_close)
             self.stream.connect(sockaddr,
                                 functools.partial(self._on_connect, parsed,
                                                   parsed_hostname))
